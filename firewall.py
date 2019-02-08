@@ -5,6 +5,7 @@ from threading import Thread
 from Crypto.Cipher import AES
 import string
 
+
 #biar nulis file catatan riwayat
 def logg(isi):
     try:
@@ -40,22 +41,14 @@ class crypto:
     
 class firewall:
             
-    def __init__(self):
+    def __init__(self, port):
         #find self ip
-        try:
-         ip = list(os.popen('ifconfig'))
-         ip = (ip[17].split())
-         self.ip = ip[1]
-         if (str(self.ip).startswith('192')) == False:
-             print('error while getting ip.its not start with 192? ip: %s' %(self.ip))
-             self.ip = str(input('self ip: '))
-        except:
-            print('error while getting self ip')
-            self.ip = str(input('self ip: '))
+        self.port = port
+        self.ip = (([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0]
         #self.ip = '125.166.13.152'
-        print('self ip: %s' %(self.ip))
+
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((str(self.ip), 80))
+        self.server.bind(("0.0.0.0", port))
         self.server.listen()
         self.validip = [self.ip, '192.168.43.1', '192.168.100.1, 192.168.100.3', '192.168.100.17', '192.168.100.2']
         self.validport = []
@@ -73,6 +66,7 @@ class firewall:
         if not ip in self.validip:
             return deny, conerror[0]
         return grant
+
    
     def handler(self, client_socket, info):
         eko = client_socket.recv(1024)
@@ -137,19 +131,22 @@ class firewall:
         client_socket.close()    
             
     def run(self): 
-        ulang = 'y'
-        while ulang.lower() == 'y':
-            try:
                 client, self.addr = self.server.accept()
                 print('connection from %s:%d' %(self.addr[0], self.addr[1]))
                 oke = Thread(target=self.handler, args = [client, self.addr])
                 oke.start()
-            except KeyboardInterrupt:
-                ulang = str(input('ulang? Y/N'))
                  
             
         
-        
-        
-firewall().run()            
-        
+list_port = list(range(80, 91))
+def runner():
+	try:
+		firewall(i).run()
+	except KeyboardInterrupt:
+		print("goodbye")
+		sys.exit(0)
+
+for i in list_port:	
+	Thread(target=runner, args=[]).start()
+print("running on port %s"%(str(list_port)))
+
